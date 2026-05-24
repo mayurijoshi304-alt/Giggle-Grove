@@ -34,7 +34,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
-      <main className="flex-grow pt-[116px]">
+      <main className="flex-grow pt-[96px]">
         <Suspense fallback={
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
