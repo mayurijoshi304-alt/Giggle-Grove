@@ -1,0 +1,144 @@
+Create a premium, modern, highly responsive nano-influencer website for “Giggle Grove” — an AI-powered kids storytelling and personalised colouring book platform designed to attract USA-based parenting and lifestyle influencers, especially from Ohio.
+
+Design Style:
+
+Disney + Pixar inspired premium aesthetic
+
+Soft pastel gradients
+
+Luxury playful UI
+
+Mobile-first responsive design
+
+Smooth animations and glowing effects
+
+Instagram/TikTok friendly layout
+
+Fast and clean performance
+
+
+Header Layout:
+
+Left Top Corner → “Admin Corner” button
+
+Right Top Corner → Sign Up / Sign In buttons
+
+Center Navigation:
+
+Home
+
+Services
+
+Sample Stories
+
+Influencer Program
+
+Pricing
+
+Contact
+
+
+
+Main Features:
+
+AI Personalised Storybooks
+
+AI Customised Colouring Books
+
+Child avatar creator using camera upload
+
+Printable PDF generation
+
+Interactive AI story chatbot
+
+3 free previews before payment unlock
+
+Influencer referral system
+
+
+Admin Dashboard Features:
+
+Admin login access for 3 admins
+
+Upload sample PDF books directly
+
+Add Canva links
+
+Add Google Drive links
+
+Add Instagram/Reel links
+
+Manage influencer content
+
+Control free preview limits
+
+Manage users and referrals
+
+Easy desktop upload system without coding knowledge
+
+
+Sample Book Section:
+
+Real uploaded content only
+
+No fake books or placeholders
+
+Netflix-style showcase
+
+3D animated book cards
+
+“View Sample PDF” button
+
+“Share With Influencer” option
+
+
+Influencer Features:
+
+Referral link generator
+
+Click tracking
+
+Commission tracking
+
+Shareable promo cards
+
+Influencer signup form
+
+
+Payment Features:
+
+UPI
+
+Google Pay
+
+PhonePe
+
+Credit/Debit Cards
+
+QR Code payment option
+
+
+Brand Details: Instagram: [giggle.grove_00](https://www.instagram.com/giggle.grove_00?utm_source=chatgpt.com)
+WhatsApp: [Giggle Grove WhatsApp Channel](https://whatsapp.com/channel/0029VbCtIzuGufIpwZOR6Y00?utm_source=chatgpt.com)
+Email: mayurijoshi304@gmail.com
+
+Tech Stack:
+
+Next.js
+
+Tailwind CSS
+
+Firebase
+
+Framer Motion
+
+
+IMPORTANT:
+
+Do not include hosting setup.
+
+Focus only on premium frontend + admin dashboard + influencer system.
+
+Make the website look like a real USA startup brand ready for influencers and parents.
+
+Keep the admin upload process extremely simple and beginner friendly.
