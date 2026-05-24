@@ -14,6 +14,7 @@ type AdminSession = {
 type AuthContextType = {
   user: UserSession | null;
   admin: AdminSession | null;
+  loaded: boolean;
   loginUser: (email: string, name?: string) => void;
   logoutUser: () => void;
   loginAdmin: (token: string, username: string) => void;
@@ -26,12 +27,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserSession | null>(null);
   const [admin, setAdmin] = useState<AdminSession | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("gg_user");
     const storedAdmin = localStorage.getItem("gg_admin");
     if (storedUser) setUser(JSON.parse(storedUser));
     if (storedAdmin) setAdmin(JSON.parse(storedAdmin));
+    setLoaded(true);
   }, []);
 
   const loginUser = (email: string, name: string = "Parent") => {
@@ -65,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, admin, loginUser, logoutUser, loginAdmin, logoutAdmin, incrementPreview }}>
+    <AuthContext.Provider value={{ user, admin, loaded, loginUser, logoutUser, loginAdmin, logoutAdmin, incrementPreview }}>
       {children}
     </AuthContext.Provider>
   );

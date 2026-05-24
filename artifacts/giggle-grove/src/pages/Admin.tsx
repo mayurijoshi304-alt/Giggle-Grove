@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { AdminLoginModal } from "@/components/auth/AdminLoginModal";
 import { 
   useGetStatsSummary, 
   getGetStatsSummaryQueryKey,
@@ -24,17 +24,17 @@ import { toast } from "sonner";
 import { Trash2, ExternalLink, Plus } from "lucide-react";
 
 export default function Admin() {
-  const { admin } = useAuth();
-  const [, setLocation] = useLocation();
+  const { admin, loaded } = useAuth();
   const queryClient = useQueryClient();
   
   const [activeTab, setActiveTab] = useState("overview");
+  const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
-    if (!admin) {
-      setLocation("/");
+    if (loaded && !admin) {
+      setShowLogin(true);
     }
-  }, [admin, setLocation]);
+  }, [loaded, admin]);
 
   // Queries
   const { data: stats } = useGetStatsSummary({
@@ -119,7 +119,31 @@ export default function Admin() {
     });
   };
 
-  if (!admin) return null;
+  if (!loaded) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!admin) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center gap-6">
+        <AdminLoginModal open={showLogin} onOpenChange={setShowLogin} />
+        <div className="text-center">
+          <h2 className="text-white text-2xl font-serif mb-2">Admin Access Required</h2>
+          <p className="text-slate-400 text-sm mb-6">Please log in through the Admin Corner to continue.</p>
+          <button
+            onClick={() => setShowLogin(true)}
+            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-colors"
+          >
+            Open Admin Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-80px)] bg-slate-900 flex text-slate-300">

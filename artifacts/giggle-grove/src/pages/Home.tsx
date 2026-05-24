@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { BookOpen, Palette, Zap, Star, Users, Shield } from "lucide-react";
 
 export default function Home() {
   return (
@@ -77,20 +78,38 @@ export default function Home() {
               {
                 title: "Personalized Stories",
                 desc: "Your child's name, their avatar, their adventure. AI weaves them into magical worlds.",
-                icon: "📖",
+                Icon: BookOpen,
                 color: "bg-pink-100 text-pink-600"
               },
               {
                 title: "Custom Colouring Books",
                 desc: "Turn family photos or imaginative prompts into beautiful colouring pages.",
-                icon: "🎨",
+                Icon: Palette,
                 color: "bg-amber-100 text-amber-600"
               },
               {
                 title: "Instant PDF Delivery",
                 desc: "Download, print, or read on your tablet instantly. Magic doesn't wait.",
-                icon: "✨",
+                Icon: Zap,
                 color: "bg-purple-100 text-purple-600"
+              },
+              {
+                title: "Child Avatar Creator",
+                desc: "Upload a photo and create a custom avatar that stars in every story.",
+                Icon: Star,
+                color: "bg-blue-100 text-blue-600"
+              },
+              {
+                title: "Influencer Referrals",
+                desc: "Share your unique link and earn 20% commission on every book created.",
+                Icon: Users,
+                color: "bg-green-100 text-green-600"
+              },
+              {
+                title: "3 Free Previews",
+                desc: "Try before you buy — explore 3 full sample books with no commitment.",
+                Icon: Shield,
+                color: "bg-rose-100 text-rose-600"
               }
             ].map((feature, i) => (
               <motion.div 
@@ -101,10 +120,8 @@ export default function Home() {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 className="bg-slate-50 rounded-3xl p-8 border border-slate-100 hover:shadow-xl transition-shadow duration-300 group"
               >
-                <div className={`w-16 h-16 rounded-2xl ${feature.color} flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
-                  {/* Real app shouldn't use emojis, using SVG icons instead for the final build, but keeping structure for now */}
-                  <span className="sr-only">{feature.title}</span>
-                  <div className="w-8 h-8 rounded-full bg-current opacity-20" />
+                <div className={`w-16 h-16 rounded-2xl ${feature.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
+                  <feature.Icon className="w-8 h-8" />
                 </div>
                 <h3 className="text-xl font-bold font-serif mb-3 text-foreground">{feature.title}</h3>
                 <p className="text-muted-foreground">{feature.desc}</p>

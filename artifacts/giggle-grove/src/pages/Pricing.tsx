@@ -3,7 +3,7 @@ import { SiGooglepay, SiPhonepe, SiVisa, SiMastercard } from "react-icons/si";
 
 export default function Pricing() {
   return (
-    <div className="min-h-screen bg-slate-50 py-16">
+    <div className="bg-slate-50 py-16">
       <div className="container mx-auto px-4">
         
         <div className="text-center max-w-3xl mx-auto mb-16">
