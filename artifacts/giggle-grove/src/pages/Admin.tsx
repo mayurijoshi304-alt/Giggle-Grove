@@ -18,10 +18,21 @@ import {
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Trash2, ExternalLink, Plus } from "lucide-react";
+import { Trash2, ExternalLink, Plus, BookOpen, Users, BarChart2, Settings, Link2, Image, FileText, Tag, Loader2 } from "lucide-react";
+
+const EMPTY_BOOK = {
+  title: "",
+  type: "storybook" as "storybook" | "coloring_book",
+  coverUrl: "",
+  previewUrl: "",
+  canvaLink: "",
+  driveLink: "",
+  instagramLink: "",
+  description: "",
+  ageRange: ""
+};
 
 export default function Admin() {
   const { admin, loaded } = useAuth();
@@ -29,70 +40,36 @@ export default function Admin() {
   
   const [activeTab, setActiveTab] = useState("overview");
   const [showLogin, setShowLogin] = useState(false);
+  const [showAddBook, setShowAddBook] = useState(false);
+  const [newBook, setNewBook] = useState(EMPTY_BOOK);
 
   useEffect(() => {
-    if (loaded && !admin) {
-      setShowLogin(true);
-    }
+    if (loaded && !admin) setShowLogin(true);
   }, [loaded, admin]);
 
-  // Queries
-  const { data: stats } = useGetStatsSummary({
-    query: { enabled: !!admin, queryKey: getGetStatsSummaryQueryKey() }
-  });
-  
-  const { data: books } = useListBooks({
-    query: { enabled: !!admin, queryKey: getListBooksQueryKey() }
-  });
+  const { data: stats } = useGetStatsSummary({ query: { enabled: !!admin, queryKey: getGetStatsSummaryQueryKey() } });
+  const { data: books, isLoading: booksLoading } = useListBooks({ query: { enabled: !!admin, queryKey: getListBooksQueryKey() } });
+  const { data: influencers } = useListInfluencers({ query: { enabled: !!admin, queryKey: getListInfluencersQueryKey() } });
+  const { data: users } = useListUsers({ query: { enabled: !!admin, queryKey: getListUsersQueryKey() } });
+  const { data: settings } = useGetAdminSettings({ query: { enabled: !!admin, queryKey: getGetAdminSettingsQueryKey() } });
 
-  const { data: influencers } = useListInfluencers({
-    query: { enabled: !!admin, queryKey: getListInfluencersQueryKey() }
-  });
-
-  const { data: users } = useListUsers({
-    query: { enabled: !!admin, queryKey: getListUsersQueryKey() }
-  });
-
-  const { data: settings } = useGetAdminSettings({
-    query: { enabled: !!admin, queryKey: getGetAdminSettingsQueryKey() }
-  });
-
-  // Mutations
   const deleteBook = useDeleteBook();
   const createBook = useCreateBook();
   const updateSettings = useUpdatePreviewLimit();
-
   const [previewLimit, setPreviewLimit] = useState("");
-  const [isAddBookOpen, setIsAddBookOpen] = useState(false);
-
-  // New Book State
-  const [newBook, setNewBook] = useState({
-    title: "",
-    type: "storybook" as const,
-    coverUrl: "",
-    previewUrl: "",
-    canvaLink: "",
-    driveLink: "",
-    instagramLink: "",
-    description: "",
-    ageRange: ""
-  });
 
   useEffect(() => {
-    if (settings) {
-      setPreviewLimit(settings.freePreviewLimit.toString());
-    }
+    if (settings) setPreviewLimit(settings.freePreviewLimit.toString());
   }, [settings]);
 
   const handleDeleteBook = (id: number) => {
-    if (confirm("Are you sure you want to delete this book?")) {
-      deleteBook.mutate({ id }, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListBooksQueryKey() });
-          toast.success("Book deleted");
-        }
-      });
-    }
+    if (!confirm("Delete this book from the sample library?")) return;
+    deleteBook.mutate({ id }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListBooksQueryKey() });
+        toast.success("Book removed");
+      }
+    });
   };
 
   const handleCreateBook = (e: React.FormEvent) => {
@@ -100,13 +77,11 @@ export default function Admin() {
     createBook.mutate({ data: newBook }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListBooksQueryKey() });
-        toast.success("Book added successfully");
-        setIsAddBookOpen(false);
-        setNewBook({
-          title: "", type: "storybook", coverUrl: "", previewUrl: "",
-          canvaLink: "", driveLink: "", instagramLink: "", description: "", ageRange: ""
-        });
-      }
+        toast.success("Sample book added!");
+        setShowAddBook(false);
+        setNewBook(EMPTY_BOOK);
+      },
+      onError: () => toast.error("Failed to add book. Check all required fields.")
     });
   };
 
@@ -134,10 +109,7 @@ export default function Admin() {
         <div className="text-center">
           <h2 className="text-white text-2xl font-serif mb-2">Admin Access Required</h2>
           <p className="text-slate-400 text-sm mb-6">Please log in through the Admin Corner to continue.</p>
-          <button
-            onClick={() => setShowLogin(true)}
-            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-colors"
-          >
+          <button onClick={() => setShowLogin(true)} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-colors">
             Open Admin Login
           </button>
         </div>
@@ -145,101 +117,279 @@ export default function Admin() {
     );
   }
 
+  const tabs = [
+    { id: "overview", label: "Overview", Icon: BarChart2 },
+    { id: "samples", label: "Sample PDFs", Icon: BookOpen },
+    { id: "influencers", label: "Influencers", Icon: Users },
+    { id: "users", label: "Users", Icon: Users },
+    { id: "settings", label: "Settings", Icon: Settings },
+  ];
+
   return (
     <div className="min-h-[calc(100vh-80px)] bg-slate-900 flex text-slate-300">
       {/* Sidebar */}
-      <div className="w-64 bg-slate-950 border-r border-slate-800 p-6 flex flex-col">
-        <h2 className="text-xl font-serif text-white mb-8">Dashboard</h2>
-        <nav className="space-y-2 flex-grow">
-          {[
-            { id: "overview", label: "Overview" },
-            { id: "books", label: "Books Manager" },
-            { id: "influencers", label: "Influencers" },
-            { id: "users", label: "Users" },
-            { id: "settings", label: "Settings" },
-          ].map(tab => (
+      <div className="w-60 bg-slate-950 border-r border-slate-800 p-5 flex flex-col shrink-0">
+        <div className="mb-8">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1">Admin Corner</p>
+          <p className="text-white font-serif text-lg">Giggle Grove</p>
+        </div>
+        <nav className="space-y-1 flex-grow">
+          {tabs.map(({ id, label, Icon }) => (
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                activeTab === tab.id ? "bg-indigo-600/20 text-indigo-300 font-medium" : "hover:bg-slate-800"
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={`w-full text-left px-4 py-2.5 rounded-lg transition-colors flex items-center gap-3 text-sm ${
+                activeTab === id ? "bg-indigo-600/20 text-indigo-300 font-medium" : "hover:bg-slate-800 text-slate-400"
               }`}
             >
-              {tab.label}
+              <Icon className="w-4 h-4" />
+              {label}
             </button>
           ))}
         </nav>
+        <p className="text-xs text-slate-600 mt-6">Logged in as admin</p>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 p-8 overflow-y-auto">
-        
+
+        {/* ── OVERVIEW ── */}
         {activeTab === "overview" && (
-          <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-white mb-8">Dashboard Overview</h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="space-y-8">
+            <h1 className="text-3xl font-bold text-white">Overview</h1>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
               {[
-                { label: "Total Books", value: stats?.totalBooks || 0 },
-                { label: "Registered Users", value: stats?.totalUsers || 0 },
-                { label: "Active Influencers", value: stats?.activeInfluencers || 0 },
-                { label: "Referral Clicks", value: stats?.totalReferralClicks || 0 },
-              ].map((stat, i) => (
-                <div key={i} className="bg-slate-800/50 border border-slate-700 p-6 rounded-2xl shadow-sm">
-                  <div className="text-sm font-medium text-slate-400 mb-2">{stat.label}</div>
-                  <div className="text-3xl font-bold text-white">{stat.value}</div>
+                { label: "Sample Books", value: stats?.totalBooks ?? 0, color: "text-indigo-400" },
+                { label: "Registered Users", value: stats?.totalUsers ?? 0, color: "text-emerald-400" },
+                { label: "Active Influencers", value: stats?.activeInfluencers ?? 0, color: "text-amber-400" },
+                { label: "Referral Clicks", value: stats?.totalReferralClicks ?? 0, color: "text-pink-400" },
+              ].map((s, i) => (
+                <div key={i} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                  <p className="text-xs font-medium text-slate-400 mb-2 uppercase tracking-wide">{s.label}</p>
+                  <p className={`text-4xl font-bold ${s.color}`}>{s.value}</p>
                 </div>
               ))}
+            </div>
+
+            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+              <h3 className="font-semibold text-white mb-4">Quick Actions</h3>
+              <div className="flex flex-wrap gap-3">
+                <Button onClick={() => setActiveTab("samples")} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl">
+                  <Plus className="w-4 h-4 mr-2" /> Add Sample PDF
+                </Button>
+                <Button onClick={() => setActiveTab("influencers")} variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-700 rounded-xl">
+                  View Influencers
+                </Button>
+              </div>
             </div>
           </div>
         )}
 
-        {activeTab === "books" && (
+        {/* ── SAMPLE PDFs CORNER ── */}
+        {activeTab === "samples" && (
           <div className="space-y-6">
-            <div className="flex justify-between items-center mb-8">
-              <h1 className="text-3xl font-bold text-white">Manage Books</h1>
-              <Button onClick={() => setIsAddBookOpen(true)} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl">
-                <Plus className="w-4 h-4 mr-2" /> Add New Book
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-3xl font-bold text-white">Sample PDFs</h1>
+                <p className="text-slate-400 text-sm mt-1">Add your own PDF links — they appear on the Sample Stories page for visitors.</p>
+              </div>
+              <Button
+                onClick={() => setShowAddBook(true)}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shrink-0"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Add Sample PDF
               </Button>
             </div>
-            
+
+            {/* ADD FORM (inline, shown when clicked) */}
+            {showAddBook && (
+              <div className="bg-slate-800 border border-indigo-500/40 rounded-2xl p-6">
+                <h3 className="text-lg font-semibold text-white mb-5 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-indigo-400" /> New Sample Book
+                </h3>
+                <form onSubmit={handleCreateBook} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Tag className="w-3.5 h-3.5" /> Book Title *
+                      </label>
+                      <Input
+                        required
+                        value={newBook.title}
+                        onChange={e => setNewBook({ ...newBook, title: e.target.value })}
+                        className="bg-slate-900 border-slate-700 text-white h-11 rounded-xl"
+                        placeholder="e.g. Luna and the Magical Forest"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Book Type *</label>
+                      <select
+                        required
+                        value={newBook.type}
+                        onChange={e => setNewBook({ ...newBook, type: e.target.value as any })}
+                        className="flex h-11 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="storybook">📖 Storybook</option>
+                        <option value="coloring_book">🎨 Colouring Book</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Age Range</label>
+                      <Input
+                        value={newBook.ageRange}
+                        onChange={e => setNewBook({ ...newBook, ageRange: e.target.value })}
+                        className="bg-slate-900 border-slate-700 text-white h-11 rounded-xl"
+                        placeholder="e.g. 3–6"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Link2 className="w-3.5 h-3.5 text-emerald-400" /> PDF Link * <span className="text-emerald-400 font-bold">(paste your PDF URL here)</span>
+                      </label>
+                      <Input
+                        required
+                        value={newBook.previewUrl}
+                        onChange={e => setNewBook({ ...newBook, previewUrl: e.target.value })}
+                        className="bg-slate-900 border-emerald-500/40 text-white h-11 rounded-xl focus-visible:ring-emerald-500"
+                        placeholder="https://drive.google.com/... or any PDF link"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Image className="w-3.5 h-3.5" /> Cover Image URL
+                      </label>
+                      <Input
+                        value={newBook.coverUrl}
+                        onChange={e => setNewBook({ ...newBook, coverUrl: e.target.value })}
+                        className="bg-slate-900 border-slate-700 text-white h-11 rounded-xl"
+                        placeholder="https://... (Unsplash, Google Drive image, etc.)"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Short Description</label>
+                      <Input
+                        value={newBook.description}
+                        onChange={e => setNewBook({ ...newBook, description: e.target.value })}
+                        className="bg-slate-900 border-slate-700 text-white h-11 rounded-xl"
+                        placeholder="A short description shown on the sample card"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <Button type="submit" disabled={createBook.isPending} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl h-11 px-6">
+                      {createBook.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+                      Add to Library
+                    </Button>
+                    <Button type="button" variant="ghost" onClick={() => { setShowAddBook(false); setNewBook(EMPTY_BOOK); }} className="text-slate-400 hover:text-white rounded-xl h-11">
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* BOOK LIST */}
+            {booksLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="w-8 h-8 animate-spin text-indigo-400" />
+              </div>
+            ) : !books?.length ? (
+              <div className="bg-slate-800/40 border border-dashed border-slate-700 rounded-2xl p-16 text-center">
+                <BookOpen className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+                <p className="text-slate-400 font-medium mb-2">No sample books yet</p>
+                <p className="text-slate-500 text-sm mb-6">Click "Add Sample PDF" to upload your first book link.</p>
+                <Button onClick={() => setShowAddBook(true)} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl">
+                  <Plus className="w-4 h-4 mr-2" /> Add Your First Sample
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3">
+                {books.map(book => (
+                  <div key={book.id} className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 flex items-center gap-4">
+                    {book.coverUrl ? (
+                      <img
+                        src={book.coverUrl}
+                        alt={book.title}
+                        className="w-12 h-16 object-cover rounded-lg shrink-0 bg-slate-700"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="w-12 h-16 bg-slate-700 rounded-lg shrink-0 flex items-center justify-center">
+                        <BookOpen className="w-5 h-5 text-slate-500" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-semibold truncate">{book.title}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs px-2 py-0.5 bg-slate-700 rounded-full text-slate-300">
+                          {book.type === "storybook" ? "📖 Storybook" : "🎨 Colouring Book"}
+                        </span>
+                        {book.ageRange && <span className="text-xs text-slate-500">Ages {book.ageRange}</span>}
+                      </div>
+                      {book.previewUrl && (
+                        <p className="text-xs text-indigo-400 truncate mt-1">{book.previewUrl}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {book.previewUrl && (
+                        <a
+                          href={book.previewUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 text-slate-400 hover:text-indigo-400 transition-colors rounded-lg hover:bg-slate-700"
+                          title="Test PDF link"
+                        >
+                          <ExternalLink size={16} />
+                        </a>
+                      )}
+                      <button
+                        onClick={() => handleDeleteBook(book.id)}
+                        className="p-2 text-slate-400 hover:text-red-400 transition-colors rounded-lg hover:bg-slate-700"
+                        title="Remove book"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── INFLUENCERS ── */}
+        {activeTab === "influencers" && (
+          <div className="space-y-6">
+            <h1 className="text-3xl font-bold text-white">Influencers</h1>
             <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-800 border-b border-slate-700">
-                    <th className="p-4 font-medium">Cover</th>
-                    <th className="p-4 font-medium">Title</th>
-                    <th className="p-4 font-medium">Type</th>
-                    <th className="p-4 font-medium">Age Range</th>
-                    <th className="p-4 font-medium text-right">Actions</th>
+                    <th className="p-4 text-sm font-medium text-slate-400">Name</th>
+                    <th className="p-4 text-sm font-medium text-slate-400">Instagram</th>
+                    <th className="p-4 text-sm font-medium text-slate-400">Referral Code</th>
+                    <th className="p-4 text-sm font-medium text-slate-400 text-right">Clicks</th>
+                    <th className="p-4 text-sm font-medium text-slate-400 text-right">Commission</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {books?.map(book => (
-                    <tr key={book.id} className="border-b border-slate-700/50 hover:bg-slate-800/50 transition-colors">
-                      <td className="p-4">
-                        <img src={book.coverUrl} alt="" className="w-10 h-14 object-cover rounded shadow-sm bg-slate-700" />
-                      </td>
-                      <td className="p-4 font-medium text-white">{book.title}</td>
-                      <td className="p-4"><span className="px-2 py-1 rounded-full bg-slate-700/50 text-xs border border-slate-600">{book.type}</span></td>
-                      <td className="p-4 text-sm">{book.ageRange || '-'}</td>
-                      <td className="p-4">
-                        <div className="flex items-center justify-end gap-2">
-                          {book.previewUrl && (
-                            <a href={book.previewUrl} target="_blank" rel="noreferrer" className="p-2 text-slate-400 hover:text-indigo-400 transition-colors">
-                              <ExternalLink size={16} />
-                            </a>
-                          )}
-                          <button onClick={() => handleDeleteBook(book.id)} className="p-2 text-slate-400 hover:text-red-400 transition-colors">
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
+                  {influencers?.map(inf => (
+                    <tr key={inf.id} className="border-b border-slate-700/50 hover:bg-slate-800/50">
+                      <td className="p-4 text-white font-medium">{inf.name}</td>
+                      <td className="p-4 text-indigo-300 text-sm">{inf.instagramHandle ? `@${inf.instagramHandle}` : '—'}</td>
+                      <td className="p-4"><code className="px-2 py-1 bg-slate-900 rounded text-xs text-emerald-400">{inf.referralCode}</code></td>
+                      <td className="p-4 text-right text-sm">{inf.clicks}</td>
+                      <td className="p-4 text-right text-green-400 font-semibold">${inf.commissionTotal.toFixed(2)}</td>
                     </tr>
                   ))}
-                  {!books?.length && (
-                    <tr>
-                      <td colSpan={5} className="p-12 text-center text-slate-500">No books found in the library.</td>
-                    </tr>
+                  {!influencers?.length && (
+                    <tr><td colSpan={5} className="p-12 text-center text-slate-500">No influencers registered yet.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -247,139 +397,66 @@ export default function Admin() {
           </div>
         )}
 
-        {activeTab === "influencers" && (
-          <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-white mb-8">Influencers</h1>
-            
-            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-800 border-b border-slate-700">
-                    <th className="p-4 font-medium">Name</th>
-                    <th className="p-4 font-medium">Instagram</th>
-                    <th className="p-4 font-medium">Code</th>
-                    <th className="p-4 font-medium text-right">Clicks</th>
-                    <th className="p-4 font-medium text-right">Commission</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {influencers?.map(inf => (
-                    <tr key={inf.id} className="border-b border-slate-700/50 hover:bg-slate-800/50">
-                      <td className="p-4 text-white">{inf.name}</td>
-                      <td className="p-4 text-indigo-300">{inf.instagramHandle || '-'}</td>
-                      <td className="p-4"><code className="px-2 py-1 bg-slate-900 rounded text-xs">{inf.referralCode}</code></td>
-                      <td className="p-4 text-right">{inf.clicks}</td>
-                      <td className="p-4 text-right text-green-400 font-medium">${inf.commissionTotal.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
+        {/* ── USERS ── */}
         {activeTab === "users" && (
           <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-white mb-8">Registered Users</h1>
-            
+            <h1 className="text-3xl font-bold text-white">Registered Users</h1>
             <div className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-800 border-b border-slate-700">
-                    <th className="p-4 font-medium">Name</th>
-                    <th className="p-4 font-medium">Email</th>
-                    <th className="p-4 font-medium">Referred By</th>
-                    <th className="p-4 font-medium text-right">Previews Used</th>
+                    <th className="p-4 text-sm font-medium text-slate-400">Name</th>
+                    <th className="p-4 text-sm font-medium text-slate-400">Email</th>
+                    <th className="p-4 text-sm font-medium text-slate-400">Referred By</th>
+                    <th className="p-4 text-sm font-medium text-slate-400 text-right">Previews Used</th>
                   </tr>
                 </thead>
                 <tbody>
                   {users?.map(u => (
                     <tr key={u.id} className="border-b border-slate-700/50 hover:bg-slate-800/50">
-                      <td className="p-4 text-white">{u.name || '-'}</td>
-                      <td className="p-4">{u.email}</td>
-                      <td className="p-4"><code className="text-xs text-indigo-300">{u.referredBy || '-'}</code></td>
-                      <td className="p-4 text-right">{u.freePreviewsUsed || 0}</td>
+                      <td className="p-4 text-white">{u.name || '—'}</td>
+                      <td className="p-4 text-sm">{u.email}</td>
+                      <td className="p-4"><code className="text-xs text-indigo-300">{u.referredBy || '—'}</code></td>
+                      <td className="p-4 text-right text-sm">{u.freePreviewsUsed || 0}</td>
                     </tr>
                   ))}
+                  {!users?.length && (
+                    <tr><td colSpan={4} className="p-12 text-center text-slate-500">No users registered yet.</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
         )}
 
+        {/* ── SETTINGS ── */}
         {activeTab === "settings" && (
-          <div className="space-y-6 max-w-xl">
-            <h1 className="text-3xl font-bold text-white mb-8">Platform Settings</h1>
-            
+          <div className="space-y-6 max-w-lg">
+            <h1 className="text-3xl font-bold text-white">Settings</h1>
             <div className="bg-slate-800/50 border border-slate-700 p-6 rounded-2xl space-y-4">
-              <h3 className="text-lg font-medium text-white">Free Preview Limit</h3>
-              <p className="text-sm text-slate-400">Number of free samples a user can view before requiring signup/upgrade.</p>
-              
-              <div className="flex gap-4">
-                <Input 
+              <h3 className="text-base font-semibold text-white">Free Preview Limit</h3>
+              <p className="text-sm text-slate-400">Number of sample PDFs a visitor can open before being asked to sign up.</p>
+              <div className="flex gap-3">
+                <Input
                   type="number"
+                  min={0}
                   value={previewLimit}
                   onChange={(e) => setPreviewLimit(e.target.value)}
-                  className="bg-slate-900 border-slate-700 text-white w-32 h-11"
+                  className="bg-slate-900 border-slate-700 text-white w-28 h-11 rounded-xl"
                 />
-                <Button 
+                <Button
                   onClick={handleSaveSettings}
                   disabled={updateSettings.isPending}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white h-11"
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white h-11 rounded-xl"
                 >
-                  Save Changes
+                  {updateSettings.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Save
                 </Button>
               </div>
             </div>
           </div>
         )}
-
       </div>
-
-      {/* Add Book Modal */}
-      <Dialog open={isAddBookOpen} onOpenChange={setIsAddBookOpen}>
-        <DialogContent className="sm:max-w-[600px] bg-slate-900 border-slate-800 text-slate-200">
-          <DialogHeader>
-            <DialogTitle className="text-xl text-white font-serif">Add New Book to Library</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreateBook} className="grid grid-cols-2 gap-4 mt-4">
-            <div className="space-y-2 col-span-2">
-              <label className="text-sm font-medium">Title *</label>
-              <Input required value={newBook.title} onChange={e => setNewBook({...newBook, title: e.target.value})} className="bg-slate-800 border-slate-700 text-white" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Type *</label>
-              <select 
-                required 
-                value={newBook.type} 
-                onChange={e => setNewBook({...newBook, type: e.target.value as any})}
-                className="flex h-10 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="storybook">Storybook</option>
-                <option value="coloring_book">Colouring Book</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Age Range</label>
-              <Input value={newBook.ageRange} onChange={e => setNewBook({...newBook, ageRange: e.target.value})} className="bg-slate-800 border-slate-700 text-white" placeholder="e.g. 3-6" />
-            </div>
-            <div className="space-y-2 col-span-2">
-              <label className="text-sm font-medium">Cover Image URL *</label>
-              <Input required value={newBook.coverUrl} onChange={e => setNewBook({...newBook, coverUrl: e.target.value})} className="bg-slate-800 border-slate-700 text-white" placeholder="https://..." />
-            </div>
-            <div className="space-y-2 col-span-2">
-              <label className="text-sm font-medium">PDF Preview URL</label>
-              <Input value={newBook.previewUrl} onChange={e => setNewBook({...newBook, previewUrl: e.target.value})} className="bg-slate-800 border-slate-700 text-white" placeholder="https://..." />
-            </div>
-            
-            <div className="space-y-2 col-span-2 mt-4 pt-4 border-t border-slate-800">
-              <Button type="submit" disabled={createBook.isPending} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white">
-                Save Book
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

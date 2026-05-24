@@ -4,6 +4,7 @@ import { m } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { BookOpen, ExternalLink, Share2 } from "lucide-react";
 
 export default function Samples() {
   const { data: books, isLoading } = useListBooks({
@@ -14,18 +15,15 @@ export default function Samples() {
   
   const FREE_PREVIEW_LIMIT = 3;
 
-  const handlePreview = (url: string | null) => {
+  const handlePreview = (url: string | null | undefined) => {
     if (!url) {
-      toast.error("Preview not available for this book.");
+      toast.error("Preview not available for this book yet.");
       return;
     }
-    
     if (user && (user.freePreviewsUsed || 0) >= FREE_PREVIEW_LIMIT) {
-      toast.error("Free preview limit reached. Please upgrade to view more!");
-      // Here you would trigger an upgrade modal
+      toast.error("Free preview limit reached. Please sign up to view more!");
       return;
     }
-
     incrementPreview();
     window.open(url, '_blank');
   };
@@ -37,86 +35,103 @@ export default function Samples() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] py-12">
+    <div className="bg-[#FAFAFA] py-16 min-h-[70vh]">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-12">
           <h1 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-4">Sample Library</h1>
-          <p className="text-lg text-muted-foreground mb-4">Discover the magic of personalized storytelling.</p>
-          
+          <p className="text-lg text-muted-foreground">
+            Explore our magical personalized storybooks and colouring pages.
+          </p>
           {user && (
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mt-4">
               Free previews used: {user.freePreviewsUsed || 0} / {FREE_PREVIEW_LIMIT}
             </div>
           )}
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="aspect-[3/4] bg-slate-200 animate-pulse rounded-xl" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="aspect-[3/4] bg-slate-200 animate-pulse rounded-2xl" />
             ))}
           </div>
+        ) : !books?.length ? (
+          /* Empty state */
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="w-24 h-24 rounded-3xl bg-primary/10 flex items-center justify-center mb-6">
+              <BookOpen className="w-12 h-12 text-primary/40" />
+            </div>
+            <h2 className="text-2xl font-serif font-bold text-foreground mb-3">Coming Soon!</h2>
+            <p className="text-muted-foreground max-w-md mb-8">
+              Our magical sample books are being prepared. Check back soon — something wonderful is on the way!
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" className="rounded-full border-primary/20 text-primary hover:bg-primary/5" onClick={() => window.history.back()}>
+                Go Back
+              </Button>
+              <Button className="rounded-full bg-primary hover:bg-primary/90 text-white" onClick={() => window.location.href = '/contact'}>
+                Get Notified
+              </Button>
+            </div>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {books?.map((book, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {books.map((book, i) => (
               <m.div
                 key={book.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="group relative perspective-1000"
+                transition={{ delay: i * 0.07 }}
+                className="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl transition-all duration-300"
               >
-                {/* 3D Card Container */}
-                <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden shadow-lg transition-all duration-500 transform-style-3d group-hover:rotate-y-[-10deg] group-hover:rotate-x-[5deg] group-hover:shadow-2xl group-hover:shadow-primary/30 bg-white">
-                  
-                  <img 
-                    src={book.coverUrl} 
-                    alt={book.title} 
+                {/* Cover */}
+                <div className="relative aspect-[3/4] overflow-hidden bg-slate-100">
+                  <img
+                    src={book.coverUrl}
+                    alt={book.title}
                     loading="lazy"
                     decoding="async"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = `https://placehold.co/600x800/f8f9fa/a8a29e?text=${encodeURIComponent(book.title)}`;
+                      (e.target as HTMLImageElement).src = `https://placehold.co/600x800/f3e8ff/a855f7?text=${encodeURIComponent(book.title)}`;
                     }}
                   />
-                  
-                  <div className="absolute top-3 left-3 flex flex-col gap-2">
-                    <Badge variant="secondary" className="bg-white/80 backdrop-blur-md text-slate-800 font-medium">
-                      {book.type === "storybook" ? "Storybook" : "Colouring Book"}
+                  <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+                    <Badge className="bg-white/90 backdrop-blur-sm text-slate-800 text-xs font-semibold border-0 shadow-sm">
+                      {book.type === "storybook" ? "📖 Storybook" : "🎨 Colouring Book"}
                     </Badge>
                     {book.ageRange && (
-                      <Badge variant="outline" className="bg-white/80 backdrop-blur-md text-slate-800 border-none shadow-sm">
+                      <Badge variant="outline" className="bg-white/90 backdrop-blur-sm text-slate-700 text-xs border-0 shadow-sm">
                         Ages {book.ageRange}
                       </Badge>
                     )}
                   </div>
+                </div>
 
-                  {/* Hover Overlay */}
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-4 gap-3">
-                    <h3 className="text-white font-serif font-bold text-xl text-center mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                      {book.title}
-                    </h3>
-                    
-                    <Button 
-                      className="w-full rounded-full bg-primary hover:bg-primary/90 text-white shadow-lg translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75"
+                {/* Info */}
+                <div className="p-5">
+                  <h3 className="font-serif font-bold text-lg text-foreground mb-1 leading-snug">{book.title}</h3>
+                  {book.description && (
+                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{book.description}</p>
+                  )}
+                  <div className="flex gap-2 mt-3">
+                    <Button
+                      className="flex-1 rounded-xl bg-primary hover:bg-primary/90 text-white text-sm h-10"
                       onClick={() => handlePreview(book.previewUrl)}
                     >
-                      View Sample PDF
+                      <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                      View PDF
                     </Button>
-                    
-                    <Button 
+                    <Button
                       variant="outline"
-                      className="w-full rounded-full border-white/30 text-white hover:bg-white/20 translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-100"
+                      size="icon"
+                      className="rounded-xl h-10 w-10 border-slate-200 shrink-0"
                       onClick={() => handleShare(book.id)}
+                      title="Share this book"
                     >
-                      Share with Influencer
+                      <Share2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
-                </div>
-                
-                {/* Fallback title for mobile/accessibility when not hovering */}
-                <div className="mt-4 md:hidden">
-                  <h3 className="font-serif font-bold text-lg">{book.title}</h3>
                 </div>
               </m.div>
             ))}
