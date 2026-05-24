@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { BookOpen, Palette, Zap, Star, Users, Shield } from "lucide-react";
@@ -13,19 +13,19 @@ export default function Home() {
         <div className="absolute inset-0 animate-gradient-shift bg-[length:200%_200%] bg-gradient-to-br from-purple-200/20 via-pink-200/20 to-blue-200/20 -z-10" />
         
         {/* Floating elements */}
-        <motion.div 
+        <m.div 
           className="absolute top-1/4 left-1/4 w-12 h-12 bg-yellow-300 rounded-full blur-xl opacity-60 -z-10"
           animate={{ y: [-20, 20, -20], x: [-10, 10, -10], opacity: [0.4, 0.8, 0.4] }}
           transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
         />
-        <motion.div 
+        <m.div 
           className="absolute bottom-1/3 right-1/4 w-16 h-16 bg-purple-300 rounded-full blur-xl opacity-60 -z-10"
           animate={{ y: [20, -20, 20], x: [10, -10, 10], opacity: [0.5, 0.9, 0.5] }}
           transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
         />
 
         <div className="container mx-auto px-4 z-10 text-center">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
@@ -54,7 +54,7 @@ export default function Home() {
                 </Button>
               </Link>
             </div>
-          </motion.div>
+          </m.div>
         </div>
         
         {/* Custom wave divider at bottom */}
@@ -112,7 +112,7 @@ export default function Home() {
                 color: "bg-rose-100 text-rose-600"
               }
             ].map((feature, i) => (
-              <motion.div 
+              <m.div 
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -125,7 +125,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-bold font-serif mb-3 text-foreground">{feature.title}</h3>
                 <p className="text-muted-foreground">{feature.desc}</p>
-              </motion.div>
+              </m.div>
             ))}
           </div>
         </div>

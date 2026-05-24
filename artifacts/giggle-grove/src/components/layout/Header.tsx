@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { AdminLoginModal } from "@/components/auth/AdminLoginModal";
 import { AuthModals } from "@/components/auth/AuthModals";
 import { useAuth } from "@/hooks/use-auth";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 
 export function Header() {
   const [location] = useLocation();
@@ -101,7 +101,7 @@ export function Header() {
 
         <AnimatePresence>
           {mobileMenuOpen && (
-            <motion.div 
+            <m.div 
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
@@ -119,7 +119,7 @@ export function Header() {
                   </Link>
                 ))}
               </div>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </header>

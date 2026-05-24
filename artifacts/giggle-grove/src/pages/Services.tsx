@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -26,7 +26,7 @@ export default function Services() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {/* AI Storybooks */}
-          <motion.div 
+          <m.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100"
@@ -41,10 +41,10 @@ export default function Services() {
             <Button className="w-full rounded-xl bg-pink-600 hover:bg-pink-700 text-white">
               Create Storybook
             </Button>
-          </motion.div>
+          </m.div>
 
           {/* AI Colouring Books */}
-          <motion.div 
+          <m.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -60,10 +60,10 @@ export default function Services() {
             <Button className="w-full rounded-xl bg-amber-500 hover:bg-amber-600 text-white">
               Create Colouring Book
             </Button>
-          </motion.div>
+          </m.div>
 
           {/* Avatar Creator */}
-          <motion.div 
+          <m.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -103,7 +103,7 @@ export default function Services() {
                 )}
               </div>
             </div>
-          </motion.div>
+          </m.div>
         </div>
       </div>
     </div>

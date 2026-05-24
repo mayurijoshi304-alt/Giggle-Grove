@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useCreateUser } from "@workspace/api-client-react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 
 interface AuthModalsProps {
   open: boolean;
@@ -82,7 +82,7 @@ export function AuthModals({ open, onOpenChange, defaultType = "signin" }: AuthM
 
           <AnimatePresence mode="wait">
             {type === "signin" ? (
-              <motion.form 
+              <m.form 
                 key="signin"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -113,9 +113,9 @@ export function AuthModals({ open, onOpenChange, defaultType = "signin" }: AuthM
                     Create an account
                   </button>
                 </p>
-              </motion.form>
+              </m.form>
             ) : (
-              <motion.form 
+              <m.form 
                 key="signup"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -173,7 +173,7 @@ export function AuthModals({ open, onOpenChange, defaultType = "signin" }: AuthM
                     Sign In
                   </button>
                 </p>
-              </motion.form>
+              </m.form>
             )}
           </AnimatePresence>
         </div>

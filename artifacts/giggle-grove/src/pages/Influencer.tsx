@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRegisterInfluencer } from "@workspace/api-client-react";
@@ -84,7 +84,7 @@ export default function Influencer() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
             
             {registeredCode ? (
-              <motion.div 
+              <m.div 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="space-y-6 py-4"
@@ -124,7 +124,7 @@ export default function Influencer() {
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </m.div>
             ) : (
               <form onSubmit={handleRegister} className="space-y-5 relative z-10">
                 <div>

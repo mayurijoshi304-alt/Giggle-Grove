@@ -1,6 +1,6 @@
 import { useListBooks, getListBooksQueryKey } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -59,7 +59,7 @@ export default function Samples() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {books?.map((book, i) => (
-              <motion.div
+              <m.div
                 key={book.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -72,6 +72,8 @@ export default function Samples() {
                   <img 
                     src={book.coverUrl} 
                     alt={book.title} 
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = `https://placehold.co/600x800/f8f9fa/a8a29e?text=${encodeURIComponent(book.title)}`;
@@ -116,7 +118,7 @@ export default function Samples() {
                 <div className="mt-4 md:hidden">
                   <h3 className="font-serif font-bold text-lg">{book.title}</h3>
                 </div>
-              </motion.div>
+              </m.div>
             ))}
           </div>
         )}
