@@ -17,6 +17,7 @@ const Influencer = lazy(() => import("@/pages/Influencer"));
 const Pricing = lazy(() => import("@/pages/Pricing"));
 const Contact = lazy(() => import("@/pages/Contact"));
 const Admin = lazy(() => import("@/pages/Admin"));
+const OrderTracker = lazy(() => import("@/pages/OrderTracker"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 const queryClient = new QueryClient({
@@ -60,6 +61,7 @@ function Router() {
         <Route path="/pricing" component={Pricing} />
         <Route path="/contact" component={Contact} />
         <Route path="/admin" component={Admin} />
+        <Route path="/orders" component={OrderTracker} />
         <Route component={NotFound} />
       </Switch>
     </PageShell>

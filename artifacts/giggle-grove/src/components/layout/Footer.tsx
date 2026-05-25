@@ -22,6 +22,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><a href="/influencer" className="hover:text-primary">Influencer Program</a></li>
               <li><a href="/pricing" className="hover:text-primary">Pricing</a></li>
+              <li><a href="/orders" className="hover:text-primary font-semibold text-primary/80">📦 Track My Order</a></li>
             </ul>
           </div>
           <div>

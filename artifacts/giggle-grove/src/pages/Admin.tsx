@@ -20,7 +20,212 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Trash2, ExternalLink, Plus, BookOpen, Users, BarChart2, Settings, Link2, Image, FileText, Tag, Loader2 } from "lucide-react";
+import { Trash2, ExternalLink, Plus, BookOpen, Users, BarChart2, Settings, Link2, Image, FileText, Tag, Loader2, ShoppingBag, CheckCircle2, Zap, PackageCheck, Truck, Pencil, X } from "lucide-react";
+
+/* ─── OrdersTab component ─────────────────────────────────── */
+type Order = {
+  id: number; orderRef: string; customerName: string; phone: string;
+  email: string | null; bookTitle: string; planName: string;
+  status: string; downloadUrl: string | null; notes: string | null;
+  createdAt: string; updatedAt: string;
+};
+
+const ORDER_STATUSES = ["received", "in_progress", "ready", "delivered"] as const;
+const STATUS_LABELS: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+  received:    { label: "Received",          color: "text-blue-400 bg-blue-900/30 border-blue-700",   icon: <PackageCheck className="w-3 h-3" /> },
+  in_progress: { label: "In Progress",       color: "text-amber-400 bg-amber-900/30 border-amber-700", icon: <Zap className="w-3 h-3" /> },
+  ready:       { label: "Ready to Download", color: "text-emerald-400 bg-emerald-900/30 border-emerald-700", icon: <CheckCircle2 className="w-3 h-3" /> },
+  delivered:   { label: "Delivered",         color: "text-purple-400 bg-purple-900/30 border-purple-700", icon: <Truck className="w-3 h-3" /> },
+};
+
+const EMPTY_ORDER = { customerName: "", phone: "", email: "", bookTitle: "", planName: "Single Adventure", status: "received" as string, downloadUrl: "", notes: "" };
+
+function OrdersTab() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState(EMPTY_ORDER);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [editStatus, setEditStatus] = useState("");
+  const [editUrl, setEditUrl] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/orders");
+      if (res.ok) setOrders(await res.json());
+    } finally { setLoading(false); }
+  };
+
+  useState(() => { load(); });
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreating(true);
+    try {
+      const res = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      if (res.ok) { toast.success("Order created!"); setShowCreate(false); setForm(EMPTY_ORDER); await load(); }
+      else toast.error("Failed to create order");
+    } finally { setCreating(false); }
+  };
+
+  const handleUpdate = async (id: number) => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/orders/${id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: editStatus, downloadUrl: editUrl || undefined, notes: editNotes || undefined }),
+      });
+      if (res.ok) { toast.success("Order updated!"); setEditId(null); await load(); }
+      else toast.error("Failed to update");
+    } finally { setSaving(false); }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete this order?")) return;
+    await fetch(`/api/orders/${id}`, { method: "DELETE" });
+    toast.success("Order deleted");
+    await load();
+  };
+
+  const startEdit = (o: Order) => { setEditId(o.id); setEditStatus(o.status); setEditUrl(o.downloadUrl ?? ""); setEditNotes(o.notes ?? ""); };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Orders</h1>
+          <p className="text-slate-400 text-sm mt-1">Manage customer orders — update status and add download links.</p>
+        </div>
+        <Button onClick={() => setShowCreate(true)} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shrink-0">
+          <Plus className="w-4 h-4 mr-2" /> New Order
+        </Button>
+      </div>
+
+      {/* Create form */}
+      {showCreate && (
+        <div className="bg-slate-800 border border-indigo-500/40 rounded-2xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2"><ShoppingBag className="w-5 h-5 text-indigo-400" /> New Order</h3>
+          <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Customer Name *</label>
+              <Input required value={form.customerName} onChange={e => setForm({...form, customerName: e.target.value})} className="bg-slate-900 border-slate-700 text-white h-10 rounded-xl" placeholder="Sarah Mitchell" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">WhatsApp Number *</label>
+              <Input required value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="bg-slate-900 border-slate-700 text-white h-10 rounded-xl" placeholder="+1 330 494 9649" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Email</label>
+              <Input value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="bg-slate-900 border-slate-700 text-white h-10 rounded-xl" placeholder="sarah@example.com" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Book Title *</label>
+              <Input required value={form.bookTitle} onChange={e => setForm({...form, bookTitle: e.target.value})} className="bg-slate-900 border-slate-700 text-white h-10 rounded-xl" placeholder="Luna's Magical Adventure" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Plan *</label>
+              <select value={form.planName} onChange={e => setForm({...form, planName: e.target.value})} className="flex h-10 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option>Single Adventure</option>
+                <option>Magic Monthly</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Initial Status</label>
+              <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="flex h-10 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                {ORDER_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s].label}</option>)}
+              </select>
+            </div>
+            <div className="md:col-span-2 space-y-1.5">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Notes (optional)</label>
+              <Input value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="bg-slate-900 border-slate-700 text-white h-10 rounded-xl" placeholder="Any notes for the customer" />
+            </div>
+            <div className="md:col-span-2 flex gap-3">
+              <Button type="submit" disabled={creating} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl h-10 px-6">
+                {creating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />} Create Order
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => { setShowCreate(false); setForm(EMPTY_ORDER); }} className="text-slate-400 hover:text-white rounded-xl h-10">Cancel</Button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Orders list */}
+      {loading ? (
+        <div className="flex items-center justify-center py-16"><Loader2 className="w-8 h-8 animate-spin text-indigo-400" /></div>
+      ) : !orders.length ? (
+        <div className="bg-slate-800/40 border border-dashed border-slate-700 rounded-2xl p-16 text-center">
+          <ShoppingBag className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+          <p className="text-slate-400 font-medium mb-2">No orders yet</p>
+          <p className="text-slate-500 text-sm mb-6">When customers place orders, add them here. They can track via the Order Tracker page.</p>
+          <Button onClick={() => setShowCreate(true)} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl"><Plus className="w-4 h-4 mr-2" /> Create First Order</Button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {orders.map(o => {
+            const cfg = STATUS_LABELS[o.status] ?? STATUS_LABELS.received;
+            const isEditing = editId === o.id;
+            return (
+              <div key={o.id} className="bg-slate-800/50 border border-slate-700 rounded-2xl overflow-hidden">
+                <div className="p-4 flex items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 flex-wrap mb-1">
+                      <code className="text-xs bg-slate-900 text-indigo-300 px-2 py-0.5 rounded font-mono">{o.orderRef}</code>
+                      <span className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full border ${cfg.color}`}>{cfg.icon} {cfg.label}</span>
+                    </div>
+                    <p className="text-white font-semibold truncate">{o.bookTitle}</p>
+                    <div className="flex items-center gap-3 mt-1 text-slate-400 text-xs flex-wrap">
+                      <span>👤 {o.customerName}</span>
+                      <span>📞 {o.phone}</span>
+                      <span>📦 {o.planName}</span>
+                      <span>🕐 {new Date(o.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    {o.notes && <p className="text-slate-500 text-xs mt-1 italic">{o.notes}</p>}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => isEditing ? setEditId(null) : startEdit(o)} className={`p-2 rounded-lg transition-colors ${isEditing ? "bg-slate-700 text-white" : "text-slate-400 hover:text-indigo-400 hover:bg-slate-700"}`} title="Edit">
+                      {isEditing ? <X className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
+                    </button>
+                    <button onClick={() => handleDelete(o.id)} className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition-colors" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                  </div>
+                </div>
+
+                {/* Inline edit panel */}
+                {isEditing && (
+                  <div className="border-t border-slate-700 bg-slate-900/50 px-4 py-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Status</label>
+                      <select value={editStatus} onChange={e => setEditStatus(e.target.value)} className="w-full h-9 rounded-xl border border-slate-700 bg-slate-900 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        {ORDER_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s].label}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Download URL</label>
+                      <Input value={editUrl} onChange={e => setEditUrl(e.target.value)} className="bg-slate-900 border-slate-700 text-white h-9 rounded-xl text-sm" placeholder="https://drive.google.com/..." />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Notes</label>
+                      <Input value={editNotes} onChange={e => setEditNotes(e.target.value)} className="bg-slate-900 border-slate-700 text-white h-9 rounded-xl text-sm" placeholder="Message to customer" />
+                    </div>
+                    <div className="md:col-span-3 flex gap-2">
+                      <Button onClick={() => handleUpdate(o.id)} disabled={saving} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl h-9 px-4 text-sm">
+                        {saving ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <CheckCircle2 className="w-3 h-3 mr-1" />} Save Changes
+                      </Button>
+                      <Button variant="ghost" onClick={() => setEditId(null)} className="text-slate-400 hover:text-white rounded-xl h-9 px-4 text-sm">Cancel</Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const EMPTY_BOOK = {
   title: "",
@@ -119,6 +324,7 @@ export default function Admin() {
 
   const tabs = [
     { id: "overview", label: "Overview", Icon: BarChart2 },
+    { id: "orders", label: "Orders", Icon: ShoppingBag },
     { id: "samples", label: "Sample PDFs", Icon: BookOpen },
     { id: "influencers", label: "Influencers", Icon: Users },
     { id: "users", label: "Users", Icon: Users },
@@ -183,6 +389,11 @@ export default function Admin() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* ── ORDERS ── */}
+        {activeTab === "orders" && (
+          <OrdersTab />
         )}
 
         {/* ── SAMPLE PDFs CORNER ── */}
