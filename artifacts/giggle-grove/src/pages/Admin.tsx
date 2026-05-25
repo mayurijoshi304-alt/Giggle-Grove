@@ -434,8 +434,8 @@ export default function Admin() {
           <div className="space-y-6 max-w-lg">
             <h1 className="text-3xl font-bold text-white">Settings</h1>
             <div className="bg-slate-800/50 border border-slate-700 p-6 rounded-2xl space-y-4">
-              <h3 className="text-base font-semibold text-white">Free Preview Limit</h3>
-              <p className="text-sm text-slate-400">Number of sample PDFs a visitor can open before being asked to sign up.</p>
+              <h3 className="text-base font-semibold text-white">Free Page Views per Book</h3>
+              <p className="text-sm text-slate-400">How many pages visitors can read for free before the paywall appears. After payment they unlock download &amp; print of the full book.</p>
               <div className="flex gap-3">
                 <Input
                   type="number"
